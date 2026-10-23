@@ -1,11 +1,11 @@
 import os
+import sys
 from openai import OpenAI
 from dotenv import load_dotenv
 
 
-def call_ai(user_input:str, openrouter_api_key:str, openrouter_base_url, openrouter_model:str) -> None:
+def call_ai(client:OpenAI, user_input:str, openrouter_model:str) -> None:
     try:
-        client = OpenAI(api_key=openrouter_api_key, base_url=openrouter_base_url)
         response = client.responses.create(
             model=openrouter_model,
             input=user_input,
@@ -19,13 +19,20 @@ def main() -> None:
     openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
     openrouter_base_url = os.getenv("OPENROUTER_BASE_URL")
     openrouter_model = os.getenv("OPENROUTER_MODEL")
-    
-    print(f"This is a chat terminal for communicating with A.I. model {openrouter_model.split("/")[1].replace("-", " ")}")
+    if any(value is None or value == "" for value in(openrouter_api_key, openrouter_base_url, openrouter_model)):
+        print(f"OPENROUTER_API_KEY, OPENROUTER_BASE_URL, and/or OPENROUTER_MODEL is missing or cannot be read from your .env file. Exiting...")
+        sys.exit(1)
+
+    client = OpenAI(api_key=openrouter_api_key, base_url=openrouter_base_url)
+    print(f"This is a chat terminal for communicating with A.I. model '{openrouter_model}'")
     while True:
         user_input = input("Your input (Type 'keluar' to exit): ")
         if user_input.strip().lower() == 'keluar':
             break
-        call_ai(user_input, openrouter_api_key, openrouter_base_url, openrouter_model)
+        if user_input.strip() == '':
+            print(f"You've entered an empty command, please try again.")
+            continue
+        call_ai(client, user_input, openrouter_model)
 
 if __name__ == "__main__":
     main()
